@@ -1,3 +1,6 @@
+require 'benchmark'
+require 'json'
+
 module Turnip
   module Execute
     def step(step_or_description, *extra_args)
@@ -22,7 +25,12 @@ module Turnip
         raise Turnip::Ambiguous, msg
       end
 
-      send(matches.first.method_name, *(matches.first.params + extra_args))
+      thing = Benchmark.measure { send(matches.first.method_name, *(matches.first.params + extra_args)) }
+      @temp_hash = {matches.first.method_name => thing.real}
+      File.open("step_benchmarks.json", "a") do |f|
+        f.write(@temp_hash.to_json)
+        f.write(',')
+      end
     end
   end
 end
